@@ -8,7 +8,7 @@ WORKDIR /app
 COPY hebrew_whisper/ /app/
 
 # Install Gunicorn and any other needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt gunicorn
+RUN pip install --trusted-host pypi.python.org -r requirements.txt 
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000

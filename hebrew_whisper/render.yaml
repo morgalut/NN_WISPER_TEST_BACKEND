@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: hebrew-whisper
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 4 -b :10000 run:app"
+    envVars:
+      - key: FLASK_DEBUG
+        value: "False"
+    region: oregon
+    plan: starter
+    healthCheckPath: "/"
+    dockerfilePath: "DockerFile"
+    numInstances: 1
+    instanceType: standard-1x
+    autoDeploy: true
+    scale:
+      minInstances: 1
+      maxInstances: 1

@@ -1,0 +1,11 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# LFS track all .pth files (PyTorch model files)
+
+# Handle specific large text files with LFS if necessary
+
+# Exclude node_modules completely
+node_modules/ -text -diff -merge
+
+# Exclude other non-essential large directories or file patterns

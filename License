@@ -1,0 +1,10 @@
+
+### Summary of Content
+- **Overview and Features**: Describes the purpose and capabilities of the project.
+- **Project Structure**: Outlines the files and directories.
+- **Setup Instructions**: Provides detailed steps for setting up the environment.
+- **Configuration**: Lists necessary configurations for file paths and word lists.
+- **Usage**: Explains how to run the app and use the endpoints.
+- **Dependencies**: Lists major dependencies, including `hebrew-tokenizer` for Hebrew text processing.
+
+This `README.md` gives a comprehensive overview of your project, making it accessible to new users and contributors. Let me know if you’d like further details in any section!

@@ -13,12 +13,11 @@ def background_task(app):
         uploads_dir = app.config['UPLOAD_FOLDER']
         new_audio_files = FileHandler.check_new_files(uploads_dir, ('.wav',))
         print("New audio files:", new_audio_files)
-        whisper_model = WhisperModel('base')  # Assuming this setup waits for model loading appropriately
+        whisper_model = WhisperModel('base')
 
         for audio_file in new_audio_files:
             audio_path = os.path.join(uploads_dir, audio_file)
             print(f"Transcribing {audio_file} using WhisperModel directly...")
-            # Assuming the transcribe method can handle synchronous calls or has been adapted accordingly
             transcription = whisper_model.get_model().transcribe(audio_path)
             print(f"Transcription for {audio_file}: {transcription}")
 
@@ -30,4 +29,6 @@ def setup_background_tasks(app):
 if __name__ == "__main__":
     app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'True') == 'True'
     setup_background_tasks(app)
-    app.run(host='0.0.0.0', port=5000,debug=app.config['DEBUG'])
+    # Listen on port from environment variable, default to 5000 if not set
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=app.config['DEBUG'])

@@ -1,0 +1,17 @@
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the application structure into the container at /app
+COPY hebrew_whisper/ /app/
+
+# Install Gunicorn and any other needed packages specified in requirements.txt
+RUN pip install --trusted-host pypi.python.org -r requirements.txt gunicorn
+
+# Make port 5000 available to the world outside this container
+EXPOSE 5000
+
+# Run Gunicorn with multiple workers
+CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:5000", "run:app"]

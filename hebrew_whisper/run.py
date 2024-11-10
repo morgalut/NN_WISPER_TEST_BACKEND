@@ -30,4 +30,4 @@ def setup_background_tasks(app):
 if __name__ == "__main__":
     app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'True') == 'True'
     setup_background_tasks(app)
-    app.run(debug=app.config['DEBUG'])
+    app.run(host='0.0.0.0', port=5000,debug=app.config['DEBUG'])

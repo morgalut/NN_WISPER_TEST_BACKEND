@@ -1,56 +1,63 @@
-import asyncio
-from flask import Blueprint, Response, json, request, jsonify, send_file, current_app,make_response
-from utilities.text_normalizer import AudioPreprocessor, TextNormalizer
-from models.whisper_model import WhisperModel
-from services.transcription_service import TranscriptionService
-from services.training_service import TrainingService
-from utilities.file_handler import FileHandler
+from flask import Blueprint, request, jsonify, send_file, current_app
 import os
+import numpy as np
+import torch
+from models.whisper_model import WhisperModel
+from utilities.text_normalizer import AudioPreprocessor
+from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
 
 main_blueprint = Blueprint('main', __name__)
 
-
 @main_blueprint.route('/transcribe', methods=['POST'])
-async def transcribe_audio():
+def transcribe_audio():
     file = request.files.get('file')
     if not file:
         return jsonify({"error": "No file uploaded"}), 400
 
-    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
+    # Save uploaded file
+    uploads_dir = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(uploads_dir, exist_ok=True)
+    file_path = os.path.join(uploads_dir, file.filename)
     file.save(file_path)
 
-    preprocessor = AudioPreprocessor('base', current_app.config['TRAINING_DATA_FOLDER'])
-    data, rate = preprocessor.preprocess_audio(file_path)
+    # Convert MP3 to WAV if necessary
+    if file.filename.endswith('.mp3'):
+        try:
+            audio = AudioSegment.from_mp3(file_path)
+            wav_path = os.path.splitext(file_path)[0] + '.wav'
+            audio.export(wav_path, format='wav')
+            os.remove(file_path)  # Remove the original MP3 file
+            file_path = wav_path  # Update path to the new WAV file
+        except CouldntDecodeError:
+            os.remove(file_path)
+            return jsonify({"error": "Could not decode MP3 file. Please check file integrity or try another file format."}), 400
 
     try:
-        whisper_model = WhisperModel()
-        transcript = await whisper_model.transcribe(file_path, language="he")
+        # Initialize Whisper model
+        whisper_model = WhisperModel(model_name="large-v2")
         
-        # Define the initial path for saving the transcription file
-        transcript_folder = current_app.config.get('TRANSCRIPT_FOLDER', './transcripts')
-        base_filename = f"{os.path.splitext(file.filename)[0]}_transcription"
-        
-        # Ensure the transcript folder exists
+        # Transcribe using the file path, not the tensor directly
+        transcription = whisper_model.transcribe(file_path, language="he")
+
+        # Save transcription
+        transcript_folder = current_app.config.get('TRANSCRIPT_FOLDER')
         os.makedirs(transcript_folder, exist_ok=True)
-        
-        # Check for existing file with the same name and add a number if necessary
-        counter = 1
+        base_filename = os.path.splitext(file.filename)[0] + "_transcription"
         transcript_filepath = os.path.join(transcript_folder, f"{base_filename}.txt")
+
+        # Ensure unique file name if necessary
+        counter = 1
         while os.path.exists(transcript_filepath):
             transcript_filepath = os.path.join(transcript_folder, f"{base_filename}_{counter}.txt")
             counter += 1
 
-        # Write the transcription to a text file with Hebrew content
         with open(transcript_filepath, 'w', encoding='utf-8') as f:
-            f.write(transcript)
+            f.write(transcription)
+
     finally:
-        os.remove(file_path)  # Clean up uploaded file
+        # Clean up
+        os.remove(file_path)
 
-    # Return the text file as a downloadable response
-    transcript_filename = os.path.basename(transcript_filepath)
-    return send_file(transcript_filepath, as_attachment=True, download_name=transcript_filename)
-
-
-@main_blueprint.route('/feedback', methods=['POST'])
-def receive_feedback():
-    return TrainingService.receive_feedback(request)
+    # Return transcription file
+    return send_file(transcript_filepath, as_attachment=True, download_name=os.path.basename(transcript_filepath))

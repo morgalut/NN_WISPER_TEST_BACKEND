@@ -83,3 +83,6 @@ Werkzeug
 zope.event                                       
 zope.interface                                    
 gunicorn
+torchvision 
+torchaudio 
+flask[async]

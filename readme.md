@@ -75,6 +75,8 @@ hebrew_whisper/
    - The app will run locally at `http://127.0.0.1:5000`.
    - The `/api/transcribe` endpoint allows file uploads for transcription.
 
+
+
 ## API Endpoints
 
 ### 1. `/api/transcribe` (POST)

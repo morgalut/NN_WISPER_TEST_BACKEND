@@ -1,3 +1,5 @@
+# C:\Users\Mor\Desktop\NN_Whisper_AI_Flask\NN_Whisper_AI_Flask_backend\hebrew_whisper\run.py
+
 import os
 from flask import Flask
 from threading import Thread
@@ -13,12 +15,12 @@ def background_task(app):
         uploads_dir = app.config['UPLOAD_FOLDER']
         new_audio_files = FileHandler.check_new_files(uploads_dir, ('.wav',))
         print("New audio files:", new_audio_files)
-        whisper_model = WhisperModel('base')
+        whisper_model = WhisperModel(model_name='large-v2')
 
         for audio_file in new_audio_files:
             audio_path = os.path.join(uploads_dir, audio_file)
             print(f"Transcribing {audio_file} using WhisperModel directly...")
-            transcription = whisper_model.get_model().transcribe(audio_path)
+            transcription = whisper_model.transcribe(audio_path, language="he")
             print(f"Transcription for {audio_file}: {transcription}")
 
 def setup_background_tasks(app):

@@ -1,13 +1,10 @@
 # C:\Users\Mor\Desktop\NN_Whisper_AI_Flask\hebrew_whisper\utilities\text_normalizer.py
 
-import os
 import re
-import numpy as np
 import soundfile as sf
 import whisper
 import unicodedata
 from scipy.signal import butter, lfilter
-from flask import current_app
 
 class AudioPreprocessor:
     def __init__(self, model_path='base', training_data_folder=None):

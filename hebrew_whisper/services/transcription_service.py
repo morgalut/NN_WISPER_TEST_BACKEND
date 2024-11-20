@@ -1,6 +1,5 @@
 from flask import jsonify, request, current_app, send_file
 from models.whisper_model import WhisperModel
-from utilities.file_handler import FileHandler
 from utilities.text_normalizer import AudioPreprocessor, TextNormalizer
 import os
 

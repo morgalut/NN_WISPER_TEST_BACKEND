@@ -25,15 +25,17 @@ def initialize_scheduler(app):
     scheduler.start()
 
     # Define the job to check for new training files, passing `app` as an argument
-    scheduler.add_job(id='Check Perfect Training Files',
-                      func=check_perfect_training_files,
-                      args=[app],  # Pass the app instance to the function
-                      trigger='interval',
-                      minutes=5)  # changed from seconds to minutes for practical usage
+    scheduler.add_job(
+        id='Check Perfect Training Files',
+        func=check_perfect_training_files,
+        args=[app],
+        trigger='interval',
+        minutes=5  # Optimized interval to reduce memory usage
+    )
 
 def check_perfect_training_files(app):
     """Check for new training files in the perfect training folder."""
-    with app.app_context():  # Use app instead of current_app
+    with app.app_context():
         try:
             perfect_training_path = app.config['PERFECT_TRAINING_FOLDER']
             new_files = FileHandler.check_new_files(perfect_training_path, ('.wav',))

@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file, current_app
 import os
-import numpy as np
 import torch
 from models.whisper_model import WhisperModel
 from utilities.text_normalizer import AudioPreprocessor
@@ -21,26 +20,26 @@ def transcribe_audio():
     file_path = os.path.join(uploads_dir, file.filename)
     file.save(file_path)
 
-    # Convert MP3 to WAV if necessary
-    if file.filename.endswith('.mp3'):
-        try:
-            audio = AudioSegment.from_mp3(file_path)
-            wav_path = os.path.splitext(file_path)[0] + '.wav'
-            audio.export(wav_path, format='wav')
-            os.remove(file_path)  # Remove the original MP3 file
-            file_path = wav_path  # Update path to the new WAV file
-        except CouldntDecodeError:
-            os.remove(file_path)
-            return jsonify({"error": "Could not decode MP3 file. Please check file integrity or try another file format."}), 400
-
     try:
-        # Initialize Whisper model
+        # Convert MP3 to WAV if necessary
+        if file.filename.endswith('.mp3'):
+            try:
+                audio = AudioSegment.from_mp3(file_path)
+                wav_path = os.path.splitext(file_path)[0] + '.wav'
+                audio.export(wav_path, format='wav')
+                os.remove(file_path)  # Remove the original MP3 file
+                file_path = wav_path  # Update path to the new WAV file
+            except CouldntDecodeError:
+                os.remove(file_path)
+                return jsonify({"error": "Could not decode MP3 file. Please check file integrity or try another file format."}), 400
+
+        # Initialize Whisper model with GPU
         whisper_model = WhisperModel(model_name="large-v2")
-        
-        # Transcribe using the file path, not the tensor directly
+
+        # Perform transcription on the GPU
         transcription = whisper_model.transcribe(file_path, language="he")
 
-        # Save transcription
+        # Save transcription to a file
         transcript_folder = current_app.config.get('TRANSCRIPT_FOLDER')
         os.makedirs(transcript_folder, exist_ok=True)
         base_filename = os.path.splitext(file.filename)[0] + "_transcription"
@@ -55,9 +54,18 @@ def transcribe_audio():
         with open(transcript_filepath, 'w', encoding='utf-8') as f:
             f.write(transcription)
 
+        # Clean up GPU memory
+        del whisper_model
+        torch.cuda.empty_cache()
+
     finally:
-        # Clean up
-        os.remove(file_path)
+        # Clean up temporary files
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
     # Return transcription file
     return send_file(transcript_filepath, as_attachment=True, download_name=os.path.basename(transcript_filepath))
+
+@main_blueprint.route("/", methods=["GET"])
+def health_check():
+    return jsonify({"status": "ok"}), 200

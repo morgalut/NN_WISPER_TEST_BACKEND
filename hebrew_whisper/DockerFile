@@ -10,8 +10,8 @@ COPY hebrew_whisper/ /app/
 # Install Gunicorn and any other needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt 
 
-# Make port 5000 available to the world outside this container
-EXPOSE 5000
+# Make port 10000 available to the world outside this container
+EXPOSE 10000
 
-# Run Gunicorn with multiple workers
-CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:5000", "run:app"]
+# Run Gunicorn with multiple workers on the correct port
+CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:10000", "run:app"]

@@ -1,9 +1,20 @@
 import os
 from flask import Flask
 from threading import Thread
-from app import create_app
-from models.whisper_model import WhisperModel  # Ensure this is updated to use the medium model
+# Correct the import path for the blueprint
+from app.views import main_blueprint
+from models.whisper_model import WhisperModel
 from utilities.file_handler import FileHandler
+
+def create_app():
+    """Create and configure an instance of the Flask application."""
+    app = Flask(__name__)
+    app.config.from_object('app.config.Config')
+    
+    # Register the directly imported blueprint
+    app.register_blueprint(main_blueprint)
+    
+    return app
 
 app = create_app()
 
@@ -42,3 +53,4 @@ if __name__ == "__main__":
     # Use the Render-assigned PORT or default to 5000 for local testing
     port = int(os.getenv('PORT', 10000))  # Default is 10000, as Render suggests
     app.run(host='0.0.0.0', port=port, debug=app.config['DEBUG'])
+    print(f"Server running on http://0.0.0.0:{port}")

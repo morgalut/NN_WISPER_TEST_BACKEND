@@ -1,8 +1,8 @@
 import os
 from flask import Flask
 from threading import Thread
-# Correct the import path for the blueprint
-from app.views import main_blueprint
+from flask_cors import CORS  # Import CORS
+from app.views import main_blueprint  # Correct the import path for the blueprint
 from models.whisper_model import WhisperModel
 from utilities.file_handler import FileHandler
 
@@ -11,6 +11,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object('app.config.Config')
     
+    # Enable CORS
+    CORS(app, resources={r"/*": {"origins": "*"}})
+
     # Register the directly imported blueprint
     app.register_blueprint(main_blueprint)
     

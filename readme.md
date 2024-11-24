@@ -89,7 +89,7 @@ Transcribe an audio file to Hebrew text.
 
 Example `curl` command:
 ```bash
-curl -X POST http://127.0.0.1:5000/transcribe ^
+curl -X POST http://127.0.0.1:10000/transcribe ^
      -F "file=@C:\\Users\\Mor\\Desktop\\music\\אייל גולן  - עיר נמל [Music.By Tamir Zur].mp3" ^
      -F "language=he" ^
      -o transcription.txt

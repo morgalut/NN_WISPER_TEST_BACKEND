@@ -58,3 +58,4 @@ gunicorn
 torchvision
 torchaudio
 flask[async]
+flask-socketio

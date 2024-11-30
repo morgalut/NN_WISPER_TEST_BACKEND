@@ -29,13 +29,10 @@ class Server:
 
     def get_port(self):
         """
-        Retrieve the port from the environment or use the default port.
+        Retrieve the port from the environment or use the default port (for local development).
         """
-        try:
-            return int(os.getenv('PORT', self.default_port))
-        except ValueError:
-            print("Invalid PORT environment variable. Using default port.")
-            return self.default_port
+        return int(os.getenv('PORT', self.default_port))
+
 
     def run(self):
         """
@@ -48,7 +45,8 @@ class Server:
             
             print(f"Starting server on {self.host}:{port}...")
             print(f"Access the server at {link}")
-            self.socketio.run(self.app, host=self.host, port=port, log_output=True)
+            self.socketio.run(self.app, host=self.host, port=port, log_output=True, debug=False)
+
             print(f"Server running on {link}")
             print(f"Blueprint URLs: {self.app.url_map}")
         except Exception as e:

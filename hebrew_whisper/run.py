@@ -1,9 +1,7 @@
-import os
 import eventlet
+eventlet.monkey_patch()  # Must be the first line of the file
 
-# Apply monkey patching before importing anything else
-eventlet.monkey_patch()
-
+import os
 from app import create_app
 
 # Create app and socketio instances

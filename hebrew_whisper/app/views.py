@@ -53,7 +53,4 @@ def transcribe_audio():
             os.remove(file_path)
         torch.cuda.empty_cache()
 
-@main_blueprint.route("/", methods=["GET"])
-def health_check():
-    """Health check endpoint."""
-    return jsonify({"status": "ok"}), 200
+

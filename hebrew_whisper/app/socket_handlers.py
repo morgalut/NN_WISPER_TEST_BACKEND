@@ -8,29 +8,18 @@ class SocketHandler:
     """Class to manage WebSocket event handlers."""
 
     def __init__(self, socketio, app):
-        """
-        Initialize the SocketHandler with the SocketIO instance and Flask app.
-
-        Args:
-            socketio: Flask-SocketIO instance.
-            app: Flask application instance.
-        """
         self.socketio = socketio
         self.app = app
         self._register_events()
 
     def _register_events(self):
-        """Register WebSocket events."""
         self.socketio.on_event('connect', self.handle_connect)
-        self.socketio.on_event('start_transcription', self.handle_transcription)
-        self.socketio.on_event('start_background_task', self.handle_background_task)
+        self.socketio.on_event('transcribe', self.handle_transcription)
 
     def handle_connect(self):
-        """Handle client connection."""
         emit('log_message', {'message': 'Client Connected'})
 
     def handle_transcription(self, data):
-        """Handle transcription requests from clients."""
         file_path = data.get('file_path')
         language = data.get('language', 'he')
 
@@ -39,21 +28,19 @@ class SocketHandler:
             return
 
         try:
-            emit('log_message', {'message': f"Loading transcription model for file: {file_path}"})
-            whisper_model = WhisperModelSingleton.get_instance(model_name="medium")  # Load model on-demand
-
-            emit('log_message', {'message': f"Starting transcription of {file_path}"})
+            whisper_model = WhisperModelSingleton.get_instance()
             transcription = whisper_model.transcribe(file_path, language)
 
-            emit('transcription_complete', {
-                'message': 'File has been successfully transcribed.',
-                'transcription': transcription,
-            })
+            # Emit progress updates (mocked here for demonstration)
+            for i in range(1, 101, 10):
+                self.socketio.sleep(1)
+                self.socketio.emit('update_progress', {'progress': i, 'time_left': f'{100-i} seconds'})
+
+            # Emit transcription completion
+            self.socketio.emit('transcription_complete', {'transcription': transcription})
         except Exception as e:
-            emit('error', {'error': str(e)})
-        finally:
-            whisper_model.clean_up()  # Clear up memory after use
-            torch.cuda.empty_cache()  # Free GPU memory if CUDA is used
+            self.socketio.emit('error', {'error': str(e)})
+
 
     def handle_background_task(self):
         """Start the background task via WebSocket."""

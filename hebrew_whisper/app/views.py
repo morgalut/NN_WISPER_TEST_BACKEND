@@ -29,7 +29,10 @@ def transcribe_audio():
             os.remove(file_path)
             file_path = output_wav_path
 
+        # Load model only when needed
+        current_app.logger.info("Loading Whisper model for transcription...")
         whisper_model = WhisperModelSingleton.get_instance()
+
         transcription = whisper_model.transcribe(file_path, language)
 
         # Save transcription to file
@@ -51,6 +54,4 @@ def transcribe_audio():
     finally:
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
-        torch.cuda.empty_cache()
-
-
+        torch.cuda.empty_cache()  # Clear GPU memory after each transcription

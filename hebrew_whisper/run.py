@@ -42,9 +42,11 @@ class Server:
             port = self.get_port()
             # Determine the link based on the host
             link = f"http://{'127.0.0.1' if self.host == '0.0.0.0' else self.host}:{port}/"
-            
+
             print(f"Starting server on {self.host}:{port}...")
             print(f"Access the server at {link}")
+            
+            # Disable debug mode for production
             self.socketio.run(self.app, host=self.host, port=port, log_output=True, debug=False)
 
             print(f"Server running on {link}")

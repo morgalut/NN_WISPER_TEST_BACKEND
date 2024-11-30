@@ -1,6 +1,7 @@
 from flask_socketio import emit
 from models.whisper_model import WhisperModelSingleton
 from utilities.file_handler import FileHandler
+import torch
 
 
 class SocketHandler:
@@ -37,10 +38,13 @@ class SocketHandler:
             emit('error', {'error': 'File path is missing.'})
             return
 
-        whisper_model = WhisperModelSingleton.get_instance(model_name="medium")
         try:
+            emit('log_message', {'message': f"Loading transcription model for file: {file_path}"})
+            whisper_model = WhisperModelSingleton.get_instance(model_name="medium")  # Load model on-demand
+
             emit('log_message', {'message': f"Starting transcription of {file_path}"})
             transcription = whisper_model.transcribe(file_path, language)
+
             emit('transcription_complete', {
                 'message': 'File has been successfully transcribed.',
                 'transcription': transcription,
@@ -48,7 +52,8 @@ class SocketHandler:
         except Exception as e:
             emit('error', {'error': str(e)})
         finally:
-            whisper_model.clean_up()
+            whisper_model.clean_up()  # Clear up memory after use
+            torch.cuda.empty_cache()  # Free GPU memory if CUDA is used
 
     def handle_background_task(self):
         """Start the background task via WebSocket."""
@@ -64,7 +69,7 @@ class SocketHandler:
                 return
 
             self.socketio.emit('log_message', {'message': f"Processing {len(audio_files)} new audio files."})
-            whisper_model = WhisperModelSingleton.get_instance(model_name="medium")
+            whisper_model = WhisperModelSingleton.get_instance(model_name="medium")  # Load model on-demand
 
             for audio_file in audio_files:
                 audio_path = uploads_dir / audio_file
@@ -74,3 +79,5 @@ class SocketHandler:
                     FileHandler.delete_file(audio_path)
                 except Exception as e:
                     self.socketio.emit('error', {'error': f"Error processing {audio_file}: {e}"})
+            whisper_model.clean_up()  # Clear memory
+            torch.cuda.empty_cache()  # Free GPU memory

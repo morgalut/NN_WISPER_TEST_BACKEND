@@ -1,4 +1,4 @@
-from flask_socketio import emit
+from flask_socketio import SocketIO, emit
 from models.whisper_model import WhisperModelSingleton
 from utilities.file_handler import FileHandler
 import torch
@@ -7,40 +7,45 @@ import torch
 class SocketHandler:
     """Class to manage WebSocket event handlers."""
 
-    def __init__(self, socketio, app):
+    def __init__(self, socketio: SocketIO, app):
+        """
+        Initialize the SocketHandler with the given SocketIO instance and Flask app.
+        Args:
+            socketio: The SocketIO instance.
+            app: The Flask application instance.
+        """
         self.socketio = socketio
         self.app = app
         self._register_events()
 
     def _register_events(self):
-        self.socketio.on_event('connect', self.handle_connect)
-        self.socketio.on_event('transcribe', self.handle_transcription)
+        """Register WebSocket event handlers."""
+        @self.socketio.on('connect')
+        def handle_connect():
+            emit('log_message', {'message': 'Client connected successfully'})
 
-    def handle_connect(self):
-        emit('log_message', {'message': 'Client Connected'})
+        @self.socketio.on('transcribe')
+        def handle_transcription(data):
+            file_path = data.get('file_path')
+            language = data.get('language', 'he')
 
-    def handle_transcription(self, data):
-        file_path = data.get('file_path')
-        language = data.get('language', 'he')
+            if not file_path:
+                emit('error', {'error': 'File path is missing.'})
+                return
 
-        if not file_path:
-            emit('error', {'error': 'File path is missing.'})
-            return
+            try:
+                whisper_model = WhisperModelSingleton.get_instance()
+                transcription = whisper_model.transcribe(file_path, language)
 
-        try:
-            whisper_model = WhisperModelSingleton.get_instance()
-            transcription = whisper_model.transcribe(file_path, language)
+                # Emit progress updates (mocked here for demonstration)
+                for i in range(1, 101, 10):
+                    self.socketio.sleep(1)
+                    emit('update_progress', {'progress': i, 'time_left': f'{100 - i} seconds'})
 
-            # Emit progress updates (mocked here for demonstration)
-            for i in range(1, 101, 10):
-                self.socketio.sleep(1)
-                self.socketio.emit('update_progress', {'progress': i, 'time_left': f'{100-i} seconds'})
-
-            # Emit transcription completion
-            self.socketio.emit('transcription_complete', {'transcription': transcription})
-        except Exception as e:
-            self.socketio.emit('error', {'error': str(e)})
-
+                # Emit transcription completion
+                emit('transcription_complete', {'transcription': transcription})
+            except Exception as e:
+                emit('error', {'error': str(e)})
 
     def handle_background_task(self):
         """Start the background task via WebSocket."""
@@ -55,16 +60,16 @@ class SocketHandler:
             if not audio_files:
                 return
 
-            self.socketio.emit('log_message', {'message': f"Processing {len(audio_files)} new audio files."})
+            emit('log_message', {'message': f"Processing {len(audio_files)} new audio files."})
             whisper_model = WhisperModelSingleton.get_instance(model_name="medium")  # Load model on-demand
 
             for audio_file in audio_files:
                 audio_path = uploads_dir / audio_file
                 try:
                     transcription = whisper_model.transcribe(audio_path, "he")
-                    self.socketio.emit('log_message', {'message': f"Transcription complete for file: {audio_file}"})
+                    emit('log_message', {'message': f"Transcription complete for file: {audio_file}"})
                     FileHandler.delete_file(audio_path)
                 except Exception as e:
-                    self.socketio.emit('error', {'error': f"Error processing {audio_file}: {e}"})
+                    emit('error', {'error': f"Error processing {audio_file}: {e}"})
             whisper_model.clean_up()  # Clear memory
             torch.cuda.empty_cache()  # Free GPU memory

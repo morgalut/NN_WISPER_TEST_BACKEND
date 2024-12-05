@@ -12,8 +12,6 @@ charset-normalizer
 click
 colorama
 fastapi
-ffmpeg-python
-ffmpy
 filelock
 Flask
 Flask-Cors

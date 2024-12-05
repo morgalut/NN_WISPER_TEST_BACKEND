@@ -4,6 +4,11 @@ eventlet.monkey_patch()  # Must be the first line of the file
 import os
 from app import create_app
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG)  # Enable debug logging
+logger = logging.getLogger(__name__)
+
 # Create app and socketio instances
 app, socketio = create_app()
 
